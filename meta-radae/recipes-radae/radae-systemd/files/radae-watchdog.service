@@ -1,0 +1,24 @@
+[Unit]
+Description=RADAE Watchdog Service
+Documentation=man:radae(1)
+After=radae.service
+BindsTo=radae.service
+
+[Service]
+Type=simple
+User=radae
+Group=radae
+
+EnvironmentFile=/etc/radae/radae-env
+
+ExecStart=/usr/sbin/radae-watchdog.sh
+
+Restart=on-failure
+RestartSec=10s
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=radae-watchdog
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,166 @@
+RADAE NPU Integration - Files Created
+======================================
+Date: 2025-11-17
+Purpose: NPU-accelerated RADAE for i.MX 8M Plus
+
+BITBAKE RECIPES
+===============
+/home/user/radae/meta-radae/recipes-radae/radae-npu/radae-npu_1.0.bb
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/radae-npu-test_1.0.bb
+
+NPU LIBRARY SOURCE FILES
+========================
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/radae_npu.h
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/npu_wrapper.h
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/npu_encoder.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/npu_decoder.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/radae_streaming.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu/files/CMakeLists.txt
+
+TEST UTILITY SOURCE FILES
+=========================
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_utils.h
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_utils.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_data.h
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/npu_benchmark.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/npu_accuracy_test.cpp
+/home/user/radae/meta-radae/radae-npu-test/files/npu_profiler.cpp
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/CMakeLists.txt
+
+TEST DATA FILES
+===============
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_vectors/generate_test_data.py
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_vectors/speech_8k.raw
+/home/user/radae/meta-radae/recipes-radae/radae-npu-test/files/test_vectors/expected_features.bin
+
+CONFIGURATION FILES
+===================
+/home/user/radae/meta-radae/conf/layer.conf
+/home/user/radae/meta-radae/conf/local.conf.sample
+
+DOCUMENTATION
+=============
+/home/user/radae/meta-radae/NPU_RECIPES_SUMMARY.md
+/home/user/radae/meta-radae/NPU_FILES_CREATED.txt (this file)
+
+TOTAL FILES: 20
+
+FILE TYPES
+==========
+BitBake Recipes (.bb):     2
+C++ Headers (.h):          4
+C++ Source (.cpp):         7
+CMake Files (.txt):        2
+Python Scripts (.py):      1
+Binary Data Files:         2
+Configuration Files:       2
+Documentation (.md):       1
+Text Lists (.txt):         1
+
+OUTPUTS WHEN BUILT
+==================
+Libraries:
+  /usr/lib/libradae-npu.so
+
+Headers:
+  /usr/include/radae/radae_npu.h
+  /usr/include/radae/npu_wrapper.h
+
+Executables:
+  /usr/bin/radae-npu-benchmark
+  /usr/bin/radae-npu-accuracy
+  /usr/bin/radae-npu-profiler
+  /usr/bin/radae-npu-quick-test
+  /usr/bin/radae-npu-stress-test
+
+Configuration:
+  /etc/radae/npu.conf
+
+Test Data:
+  /usr/share/radae/test-vectors/speech_8k.raw
+  /usr/share/radae/test-vectors/expected_features.bin
+
+BUILD COMMANDS
+==============
+# Add layer to build
+bitbake-layers add-layer /home/user/radae/meta-radae
+
+# Build NPU library
+bitbake radae-npu
+
+# Build test utilities
+bitbake radae-npu-test
+
+# Build both
+bitbake radae-npu radae-npu-test
+
+# Include in image (add to conf/local.conf)
+IMAGE_INSTALL:append = " radae-npu radae-npu-test"
+
+TESTING COMMANDS
+================
+# On target device after deployment
+
+# Quick test
+radae-npu-quick-test
+
+# Performance benchmark
+radae-npu-benchmark --quick
+radae-npu-benchmark --full
+
+# Accuracy verification
+radae-npu-accuracy --test-vectors /usr/share/radae/test-vectors
+
+# Performance profiling
+radae-npu-profiler --duration 60
+
+# Stress test
+radae-npu-stress-test 300
+
+KEY FEATURES
+============
+✓ NPU acceleration with VeriSilicon delegate
+✓ Automatic CPU fallback if NPU unavailable
+✓ INT8 quantization support
+✓ NEON optimizations for ARM Cortex-A53
+✓ C API with C++ implementation
+✓ Comprehensive testing suite
+✓ Performance profiling tools
+✓ Real-time capable (<2ms per frame target)
+✓ Batch processing support
+✓ Runtime configuration
+✓ Production-ready BitBake recipes
+
+DEPENDENCIES
+============
+Build:
+  - tensorflow-lite
+  - imx-vsi-npu
+  - cmake >= 3.10
+  - pkgconfig
+
+Runtime:
+  - tensorflow-lite
+  - imx-vsi-npu
+  - firmware-imx-vpu-imx8
+  - imx-vpu-hantro
+
+PERFORMANCE TARGETS
+===================
+Encoder: <2ms per frame (NPU), <10ms (CPU)
+Decoder: <2ms per frame (NPU), <10ms (CPU)
+Real-time Factor: <0.1 (10% of real-time)
+
+ACCURACY TARGETS
+================
+Feature MSE: <0.01
+Audio SNR: >20 dB
+Correlation: >0.95
+
+PLATFORM
+========
+Target: NXP i.MX 8M Plus
+NPU: VeriSilicon 2.3 TOPS
+CPU: ARM Cortex-A53 @ 1.8GHz
+OS: Yocto Linux (kirkstone or later)
+

@@ -1,0 +1,475 @@
+#
+# local.conf.sample - Sample Yocto Build Configuration for RADAE
+#
+# This file contains sample configuration settings for building RADAE on i.MX 8M Plus.
+# Copy this file to your build directory as conf/local.conf and customize as needed.
+#
+# Usage:
+#   cp meta-radae/conf/local.conf.sample conf/local.conf
+#   vi conf/local.conf
+#   bitbake core-image-minimal
+#
+# Version: 1.0
+# Date: 2025-11-17
+#
+
+# =============================================================================
+# MACHINE SELECTION
+# =============================================================================
+
+# Select target hardware platform
+# Options for i.MX 8M Plus:
+#   - imx8mpevk             : NXP i.MX 8M Plus EVK
+#   - imx8mp-lpddr4-evk     : i.MX 8M Plus with LPDDR4
+#   - var-som-mx8m-plus     : Variscite VAR-SOM-MX8M-PLUS
+#   - nitrogen8mp           : Boundary Devices Nitrogen8M Plus
+
+MACHINE = "imx8mpevk"
+
+# =============================================================================
+# DISTRIBUTION
+# =============================================================================
+
+# Select distribution
+# Options:
+#   - fsl-imx-wayland   : NXP's Wayland-based distribution (recommended)
+#   - fsl-imx-xwayland  : NXP's X11/Wayland mixed distribution
+#   - fsl-imx-fb        : NXP's framebuffer distribution
+#   - poky              : Standard Yocto distribution (minimal)
+
+DISTRO = "fsl-imx-wayland"
+
+# Distribution version
+# DISTRO_VERSION = "5.15-kirkstone"
+
+# =============================================================================
+# NXP EULA ACCEPTANCE
+# =============================================================================
+
+# Accept NXP's End User License Agreement
+# Required for proprietary firmware and NPU drivers
+# Set to "1" to accept
+
+ACCEPT_FSL_EULA = "1"
+
+# =============================================================================
+# PACKAGE MANAGEMENT
+# =============================================================================
+
+# Package management system
+# Options: package_rpm, package_ipk, package_deb
+PACKAGE_CLASSES = "package_rpm"
+
+# =============================================================================
+# PARALLEL BUILD CONFIGURATION
+# =============================================================================
+
+# Number of parallel bitbake threads
+# Recommended: number of CPU cores on build machine
+# Adjust based on available RAM (2GB per thread recommended)
+
+BB_NUMBER_THREADS = "8"
+
+# Number of parallel make jobs per task
+# Recommended: number of CPU cores + 2
+# Can be higher if sufficient RAM available
+
+PARALLEL_MAKE = "-j 8"
+
+# =============================================================================
+# SHARED DIRECTORIES
+# =============================================================================
+
+# Shared download directory (can be reused across builds)
+# Saves bandwidth and time for multiple builds
+DL_DIR = "${TOPDIR}/../downloads"
+
+# Shared state cache directory (speeds up rebuilds)
+# Can be shared across compatible builds
+SSTATE_DIR = "${TOPDIR}/../sstate-cache"
+
+# Temporary directory (build artifacts)
+# This gets large (30-100GB), ensure sufficient space
+# TMPDIR = "${TOPDIR}/tmp"
+
+# =============================================================================
+# DISK SPACE MONITORING
+# =============================================================================
+
+# Monitor disk space and stop/abort builds when low
+# Format: ACTION,DIR,MINIMUM_SPACE,FREE_INODES
+BB_DISKMON_DIRS = "\
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    ABORT,${TMPDIR},100M,1K \
+    ABORT,${DL_DIR},100M,1K \
+    ABORT,${SSTATE_DIR},100M,1K \
+"
+
+# =============================================================================
+# i.MX 8M PLUS NPU CONFIGURATION
+# =============================================================================
+
+# Enable NPU (Neural Processing Unit) support
+# Critical for RADAE NPU acceleration
+
+MACHINEOVERRIDES =. "use-nxp-bsp:imx-nxp-bsp:imxvpuhantro:imxvpug2:imxgpu2d:imxgpu3d:imxipu:imxvpucnm:imxnpu:"
+
+# Add NPU to machine features
+MACHINE_FEATURES:append = " npu"
+
+# Enable GPU/VPU (optional, for display/video)
+MACHINE_FEATURES:append = " gpu vpu"
+
+# =============================================================================
+# RADAE PACKAGES
+# =============================================================================
+
+# Add RADAE packages to root filesystem
+IMAGE_INSTALL:append = " \
+    radae-npu \
+    radae-npu-test \
+    tensorflow-lite \
+    imx-vsi-npu \
+    firmware-imx-vpu-imx8 \
+"
+
+# =============================================================================
+# SYSTEM FEATURES
+# =============================================================================
+
+# Init system (systemd recommended for RADAE)
+DISTRO_FEATURES:append = " systemd"
+DISTRO_FEATURES_BACKFILL_CONSIDERED:append = " sysvinit"
+VIRTUAL-RUNTIME_init_manager = "systemd"
+VIRTUAL-RUNTIME_initscripts = ""
+
+# Graphics (Wayland)
+DISTRO_FEATURES:append = " wayland"
+
+# Remove X11 (optional, reduces image size)
+# DISTRO_FEATURES:remove = " x11"
+
+# Networking
+DISTRO_FEATURES:append = " wifi bluetooth ipv6"
+
+# Audio (required for RADAE)
+DISTRO_FEATURES:append = " alsa pulseaudio"
+
+# Security
+DISTRO_FEATURES:append = " pam"
+
+# =============================================================================
+# DEVELOPMENT vs PRODUCTION BUILD
+# =============================================================================
+
+# === DEVELOPMENT BUILD (Uncomment for development) ===
+# Enable useful development features
+
+# EXTRA_IMAGE_FEATURES:append = " \
+#     debug-tweaks \
+#     tools-debug \
+#     tools-sdk \
+#     dev-pkgs \
+#     dbg-pkgs \
+#     package-management \
+#     ssh-server-openssh \
+#     empty-root-password \
+# "
+
+# === PRODUCTION BUILD (Uncomment for production) ===
+# Minimal image with optimizations
+
+# Remove debug packages
+# INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+
+# Enable read-only rootfs (optional)
+# IMAGE_FEATURES:append = " read-only-rootfs"
+
+# Remove documentation to save space
+# INHERIT += "rm_work"
+
+# =============================================================================
+# COMMON IMAGE FEATURES
+# =============================================================================
+
+# SSH server for remote access (recommended)
+EXTRA_IMAGE_FEATURES:append = " ssh-server-openssh"
+
+# Package management on target (optional, for development)
+EXTRA_IMAGE_FEATURES:append = " package-management"
+
+# =============================================================================
+# AUDIO CONFIGURATION
+# =============================================================================
+
+# Install ALSA utilities
+IMAGE_INSTALL:append = " \
+    alsa-utils \
+    alsa-lib \
+    alsa-plugins \
+"
+
+# Install PulseAudio (optional)
+# IMAGE_INSTALL:append = " \
+#     pulseaudio-server \
+#     pulseaudio-misc \
+# "
+
+# =============================================================================
+# NETWORKING
+# =============================================================================
+
+# Network utilities
+IMAGE_INSTALL:append = " \
+    openssh-sftp-server \
+    iperf3 \
+    ethtool \
+    iproute2 \
+"
+
+# WiFi support (optional)
+# IMAGE_INSTALL:append = " \
+#     linux-firmware-ralink \
+#     linux-firmware-rtl8192cu \
+#     wpa-supplicant \
+# "
+
+# =============================================================================
+# DEBUGGING AND DEVELOPMENT TOOLS
+# =============================================================================
+
+# Uncomment for development builds
+
+# System utilities
+# IMAGE_INSTALL:append = " \
+#     vim \
+#     htop \
+#     screen \
+#     tmux \
+#     strace \
+#     gdb \
+#     ldd \
+# "
+
+# Python development
+# IMAGE_INSTALL:append = " \
+#     python3 \
+#     python3-pip \
+#     python3-numpy \
+#     python3-scipy \
+# "
+
+# Build tools on target (for native compilation)
+# IMAGE_INSTALL:append = " \
+#     gcc \
+#     g++ \
+#     make \
+#     cmake \
+#     binutils \
+# "
+
+# =============================================================================
+# OPTIMIZATION SETTINGS
+# =============================================================================
+
+# ARM architecture tuning
+# Options: armv8a, armv8a-crc, armv8a-crc-crypto
+DEFAULTTUNE = "armv8a-crc-crypto"
+
+# Compiler optimization flags (default is -O2)
+# For production, consider -O3 or -Ofast
+# TARGET_CFLAGS:append = " -O3"
+
+# Link-Time Optimization (LTO) for smaller binaries
+# Can increase build time significantly
+# DISTRO_FEATURES:append = " lto"
+
+# Optimize for size (smaller images)
+# DISTRO_FEATURES:append = " size-optimization"
+
+# =============================================================================
+# IMAGE FORMAT AND SIZE
+# =============================================================================
+
+# Output image formats
+# Options: tar.gz, wic, wic.zst, ext4, etc.
+IMAGE_FSTYPES = "wic.zst tar.gz"
+
+# WIC (OpenEmbedded Kickstart) configuration
+WKS_FILE = "imx8mp-sdcard.wks"
+
+# Root filesystem size (in KB)
+# IMAGE_ROOTFS_SIZE = "2097152"  # 2GB
+
+# Extra space beyond actual content (default 1.3×)
+IMAGE_OVERHEAD_FACTOR = "1.3"
+
+# Additional free space (in KB)
+IMAGE_ROOTFS_EXTRA_SPACE = "524288"  # 512MB
+
+# =============================================================================
+# KERNEL CONFIGURATION
+# =============================================================================
+
+# Kernel provider
+PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
+
+# Kernel version (use NXP's kernel)
+# PREFERRED_VERSION_linux-imx = "5.15%"
+
+# Kernel modules to build
+# KERNEL_MODULES_AUTOLOAD += "galcore"  # NPU driver
+
+# =============================================================================
+# U-BOOT CONFIGURATION
+# =============================================================================
+
+# Bootloader provider
+PREFERRED_PROVIDER_virtual/bootloader = "u-boot-imx"
+PREFERRED_PROVIDER_u-boot = "u-boot-imx"
+
+# U-Boot configuration
+UBOOT_CONFIG = "sd"
+
+# =============================================================================
+# ADDITIONAL PACKAGES (Optional)
+# =============================================================================
+
+# Multimedia support
+# IMAGE_INSTALL:append = " \
+#     gstreamer1.0 \
+#     gstreamer1.0-plugins-base \
+#     gstreamer1.0-plugins-good \
+#     gstreamer1.0-plugins-bad \
+# "
+
+# USB tools
+# IMAGE_INSTALL:append = " \
+#     usbutils \
+#     usb-modeswitch \
+# "
+
+# File system utilities
+# IMAGE_INSTALL:append = " \
+#     e2fsprogs \
+#     dosfstools \
+#     util-linux \
+# "
+
+# =============================================================================
+# LICENSE CONFIGURATION
+# =============================================================================
+
+# Compatible licenses
+# LICENSE_FLAGS_WHITELIST = "commercial"
+
+# =============================================================================
+# SECURITY
+# =============================================================================
+
+# Uncomment to enable security features
+
+# Add security features
+# DISTRO_FEATURES:append = " security"
+
+# AppArmor or SELinux
+# DISTRO_FEATURES:append = " apparmor"
+# or
+# DISTRO_FEATURES:append = " selinux"
+
+# =============================================================================
+# LOCALE AND TIMEZONE
+# =============================================================================
+
+# Enable specific locales (saves space)
+IMAGE_LINGUAS = "en-us"
+
+# Or enable all locales
+# IMAGE_LINGUAS = ""
+
+# Default timezone
+# DEFAULT_TIMEZONE = "America/Los_Angeles"
+
+# =============================================================================
+# RADAE-SPECIFIC CONFIGURATION
+# =============================================================================
+
+# RADAE backend selection
+# Options: npu (default), cpu, gpu
+# RADAE_BACKEND = "npu"
+
+# RADAE optimization level
+# RADAE_OPTIMIZE_LEVEL = "2"
+
+# RADAE model directory
+# RADAE_MODEL_DIR = "/usr/share/radae/models"
+
+# RADAE NPU configuration
+PACKAGECONFIG:pn-radae-npu = "npu"
+
+# To build CPU-only version:
+# PACKAGECONFIG:pn-radae-npu = ""
+
+# =============================================================================
+# DEBUGGING
+# =============================================================================
+
+# Enable verbose logging
+# Uncomment for troubleshooting build issues
+
+# Bitbake logging
+# BB_LOGCONFIG = "1"
+
+# Keep build directories after successful build (for debugging)
+# RM_WORK_EXCLUDE += "radae-npu tensorflow-lite"
+
+# Generate build statistics
+# INHERIT += "buildstats"
+
+# =============================================================================
+# CUSTOM VARIABLES
+# =============================================================================
+
+# Add your custom variables here
+# MY_CUSTOM_VAR = "value"
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# 1. First build will take 3-6 hours depending on hardware
+# 2. Ensure at least 100GB free disk space in build directory
+# 3. Recommended: 16+ GB RAM, 8+ CPU cores
+# 4. Network: First build downloads ~15GB of source code
+# 5. To clean: bitbake -c cleanall <package>
+# 6. To rebuild: bitbake <image>
+# 7. Images location: tmp/deploy/images/${MACHINE}/
+# 8. SDK location: tmp/deploy/sdk/
+
+# =============================================================================
+# QUICK START
+# =============================================================================
+
+# 1. Copy this file to build/conf/local.conf
+# 2. Edit MACHINE if using different board
+# 3. Adjust BB_NUMBER_THREADS and PARALLEL_MAKE for your host
+# 4. Run: bitbake core-image-minimal
+# 5. Flash image to SD card
+# 6. Boot and test RADAE
+
+# =============================================================================
+# SUPPORT
+# =============================================================================
+
+# For issues and questions:
+# - GitHub: https://github.com/drowe67/radae
+# - Documentation: /meta-radae/docs/
+# - Build guide: /meta-radae/docs/BUILD_GUIDE.md
+# - Integration: /meta-radae/docs/INTEGRATION.md
+# - Testing: /meta-radae/docs/TESTING.md
+
+# =============================================================================
+# END OF CONFIGURATION
+# =============================================================================

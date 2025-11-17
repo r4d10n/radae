@@ -1,0 +1,154 @@
+.TH RADAE 1 "2025-01-17" "RADAE 1.0" "User Commands"
+.SH NAME
+radae \- Real-time Artificial Intelligence Deep learning Audio Encoder
+.SH SYNOPSIS
+.B radae-trx
+[\fIOPTIONS\fR]
+.br
+.B radae-tx
+[\fIOPTIONS\fR]
+.br
+.B radae-rx
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+RADAE is a neural vocoder for HF radio voice communication. It provides high-quality
+speech compression using machine learning, optimized for i.MX 8M Plus NPU acceleration.
+.PP
+.B radae-trx
+provides full-duplex operation with simultaneous TX and RX.
+.PP
+.B radae-tx
+provides transmit-only operation.
+.PP
+.B radae-rx
+provides receive-only operation.
+.SH OPTIONS
+.TP
+.BR \-c ", " \-\-config =\fIFILE\fR
+Configuration file (default: /etc/radae/radae.conf)
+.TP
+.BR \-t ", " \-\-tx\-only
+Transmit only mode (for radae-trx)
+.TP
+.BR \-r ", " \-\-rx\-only
+Receive only mode (for radae-trx)
+.TP
+.BR \-d ", " \-\-device =\fINAME\fR
+Audio device name (overrides config file)
+.TP
+.BR \-v ", " \-\-verbose
+Verbose output
+.TP
+.BR \-h ", " \-\-help
+Display help and exit
+.TP
+.BR \-V ", " \-\-version
+Output version information and exit
+.SH CONFIGURATION
+Configuration files use INI format with the following sections:
+.SS [audio]
+.TP
+.B sample_rate
+Audio sample rate (default: 16000)
+.TP
+.B channels
+Number of audio channels (default: 1)
+.TP
+.B period_size
+ALSA period size in frames (default: 160)
+.TP
+.B buffer_size
+ALSA buffer size in frames (default: 1600)
+.TP
+.B capture_device
+ALSA capture device (default: hw:0,0)
+.TP
+.B playback_device
+ALSA playback device (default: hw:0,0)
+.SS [ofdm]
+.TP
+.B sample_rate
+OFDM sample rate (default: 8000)
+.TP
+.B num_carriers
+Number of OFDM carriers (default: 30)
+.TP
+.B symbol_rate
+Symbol rate in symbols/second (default: 50)
+.TP
+.B cp_length
+Cyclic prefix length in seconds (default: 0.002)
+.TP
+.B pilot_spacing
+Spacing between pilot carriers (default: 4)
+.SS [npu]
+.TP
+.B enable
+Enable NPU acceleration (default: 1)
+.TP
+.B encoder_model
+Path to encoder model (default: /usr/share/radae/radae_encoder_int8.tflite)
+.TP
+.B decoder_model
+Path to decoder model (default: /usr/share/radae/radae_decoder_int8.tflite)
+.TP
+.B num_threads
+Number of CPU threads for inference (default: 2)
+.SS [ptt]
+.TP
+.B enable
+Enable PTT control (default: 0)
+.TP
+.B gpio_chip
+GPIO chip name (default: gpiochip0)
+.TP
+.B gpio_line
+GPIO line number (default: 12)
+.TP
+.B active_low
+PTT active low (1) or high (0) (default: 0)
+.TP
+.B delay_ms
+PTT activation delay in milliseconds (default: 100)
+.SS [logging]
+.TP
+.B level
+Log level: debug, info, warning, error (default: info)
+.TP
+.B file
+Log file path (default: /var/log/radae/radae.log)
+.SH EXAMPLES
+.TP
+Full-duplex operation with default configuration:
+.B radae-trx
+.TP
+Transmit only with custom configuration:
+.B radae-tx \-c /home/user/myradae.conf
+.TP
+Receive only with verbose output:
+.B radae-rx \-v
+.SH FILES
+.TP
+.I /etc/radae/radae.conf
+Default configuration file
+.TP
+.I /usr/share/radae/radae_encoder_int8.tflite
+NPU encoder model
+.TP
+.I /usr/share/radae/radae_decoder_int8.tflite
+NPU decoder model
+.TP
+.I /var/log/radae/radae.log
+Default log file
+.SH AUTHOR
+Written by the RADAE Project Team.
+.SH REPORTING BUGS
+Report bugs to: https://github.com/drowe67/radae/issues
+.SH COPYRIGHT
+Copyright \(co 2025 RADAE Project. License MIT.
+.SH SEE ALSO
+.BR aplay (1),
+.BR arecord (1),
+.BR alsamixer (1)
+.PP
+Full documentation: https://github.com/drowe67/radae

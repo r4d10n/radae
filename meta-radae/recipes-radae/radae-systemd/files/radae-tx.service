@@ -1,0 +1,40 @@
+[Unit]
+Description=RADAE HF Voice Codec (TX Only)
+Documentation=man:radae(1)
+After=network.target sound.target
+Requires=sound.target
+
+[Service]
+Type=simple
+User=radae
+Group=radae
+SupplementaryGroups=audio gpio
+
+EnvironmentFile=/etc/radae/radae-env
+
+ExecStartPre=/usr/bin/chrt -f -p 80 $$
+ExecStart=/usr/bin/radae-tx --config /etc/radae/radae.conf
+
+Restart=on-failure
+RestartSec=5s
+
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+Nice=-10
+CPUAffinity=0 1 2 3
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/radae /run/radae
+
+DeviceAllow=/dev/snd rw
+DeviceAllow=/dev/gpiochip0 rw
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=radae-tx
+
+[Install]
+WantedBy=multi-user.target

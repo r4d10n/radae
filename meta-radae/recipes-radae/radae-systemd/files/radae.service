@@ -1,0 +1,69 @@
+[Unit]
+Description=RADAE HF Voice Codec (Full-Duplex)
+Documentation=man:radae(1) https://github.com/drowe67/radae
+After=network.target sound.target systemd-tmpfiles-setup.service
+Requires=sound.target
+Wants=radae-watchdog.service
+
+[Service]
+Type=simple
+User=radae
+Group=radae
+SupplementaryGroups=audio gpio
+
+# Environment
+EnvironmentFile=/etc/radae/radae-env
+
+# Pre-start checks
+ExecStartPre=/bin/sh -c 'test -e /dev/snd/pcmC0D0c || (echo "Audio device not found"; exit 1)'
+ExecStartPre=/bin/sh -c 'test -f /usr/share/radae/radae_encoder_int8.tflite || (echo "NPU models not found"; exit 1)'
+
+# Set real-time priority for audio thread
+ExecStartPre=/usr/bin/chrt -f -p 80 $$
+
+# Main service
+ExecStart=/usr/bin/radae-trx --config /etc/radae/radae.conf
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=3
+StartLimitInterval=120s
+
+# Resource limits
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+Nice=-10
+IOSchedulingClass=realtime
+IOSchedulingPriority=2
+
+# CPU affinity (use all cores)
+CPUAffinity=0 1 2 3
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/radae /var/lib/radae /run/radae
+
+# Allow access to devices
+DeviceAllow=/dev/snd rw
+DeviceAllow=/dev/gpiochip0 rw
+DevicePolicy=closed
+
+# Capabilities
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=radae
+
+# Watchdog
+WatchdogSec=30s
+
+[Install]
+WantedBy=multi-user.target
+Alias=radae-trx.service

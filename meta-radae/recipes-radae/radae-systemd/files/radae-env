@@ -1,0 +1,31 @@
+# RADAE Environment Variables
+# This file is sourced by systemd service units
+
+# Set CPU governor to performance for low latency
+# Options: performance, ondemand, powersave, conservative
+CPU_GOVERNOR=performance
+
+# NPU configuration
+NPU_CACHE_DIR=/var/lib/radae/npu-cache
+NPU_LOG_LEVEL=warning
+
+# Audio configuration
+ALSA_CONFIG_PATH=/etc/alsa/conf.d/radae.conf
+
+# TensorFlow Lite settings
+TFLITE_NUM_THREADS=2
+TFLITE_USE_NPU_DELEGATE=1
+
+# Disable GPU (not used for RADAE)
+TFLITE_ENABLE_GPU=0
+
+# Memory limits
+# Prevent OOM killer from terminating RADAE
+OOM_SCORE_ADJ=-500
+
+# Real-time priority
+RT_PRIORITY=80
+
+# Logging
+RADAE_LOG_LEVEL=info
+RADAE_LOG_TO_SYSLOG=1

@@ -1,0 +1,41 @@
+# RADAE Log Rotation Configuration
+
+/var/log/radae/radae.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 radae radae
+    sharedscripts
+
+    postrotate
+        # Signal RADAE to reopen log file if running
+        systemctl kill -s HUP radae.service 2>/dev/null || true
+    endscript
+}
+
+/var/log/radae/watchdog.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 radae radae
+}
+
+/var/log/radae/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 radae radae
+    maxsize 100M
+
+    # Delete logs older than 30 days
+    maxage 30
+}
